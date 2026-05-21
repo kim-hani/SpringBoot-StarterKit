@@ -56,7 +56,7 @@ java -version
 ### Step 1. 레포지토리 클론
 
 ```bash
-git clone https://github.com/kim-hani/CLAUDE-SPRINGBOOT-STARTERKIT.git
+git clone https://github.com/kim-hani/SpringBoot-StarterKit.git
 cd CLAUDE-SPRINGBOOT-STARTERKIT
 ```
 
