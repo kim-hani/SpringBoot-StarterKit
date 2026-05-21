@@ -112,9 +112,82 @@ chmod +x init.sh
 
 ---
 
-### Step 3. 환경 변수 설정
+### Step 3. 민감 정보 보안 설정 (필수)
 
-#### 3-1. JWT Secret Key 생성
+> ⛔ **절대 금지**: JWT 비밀키, DB 접속 정보, OAuth2 키를 `.yml` 파일이나 소스 코드에 **직접 입력하지 마세요.**  
+> 이 정보가 GitHub에 한 번이라도 올라가면, 계정 탈취·DB 무단 접근·토큰 위조 등의 보안 사고로 이어질 수 있습니다.  
+> 이 프로젝트는 모든 민감 정보를 **환경 변수**로 주입받도록 설계되어 있습니다.
+
+---
+
+#### 3-1. YML 설정 구조 이해
+
+각 `application-{profile}.yml` 파일은 실제 값 대신 `${환경변수명}` 형태로 외부 값을 참조합니다.
+
+**`application.yml` — JWT 설정**
+```yaml
+jwt:
+  secret: ${JWT_SECRET}        # 기본값 없음 — 환경 변수 미설정 시 앱 실행 자체가 실패
+  access-token-expiration: 1800000      # AccessToken 30분 (ms)
+  refresh-token-expiration: 1209600000  # RefreshToken 14일 (ms)
+```
+
+**`application-mysql.yml` — MySQL DB 설정**
+```yaml
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/starterdb?serverTimezone=Asia/Seoul}
+    username: ${DB_USERNAME:root}   # 콜론(:) 뒤는 환경 변수 미설정 시 사용할 기본값
+    password: ${DB_PASSWORD:}       # 기본값 없음 (빈 문자열)
+```
+
+**`application-local.yml` — OAuth2 소셜 로그인 설정 (로컬 개발)**
+```yaml
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}        # 기본값 없음 — 소셜 로그인 사용 시 필수
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+          naver:
+            client-id: ${NAVER_CLIENT_ID}
+            client-secret: ${NAVER_CLIENT_SECRET}
+          kakao:
+            client-id: ${KAKAO_CLIENT_ID}
+            client-secret: ${KAKAO_CLIENT_SECRET}
+```
+
+> 💡 `${변수명:기본값}` 형식은 환경 변수가 없을 때 기본값을 사용합니다.  
+> `${JWT_SECRET}`처럼 기본값이 없으면 환경 변수 미설정 시 애플리케이션 시작이 실패합니다.
+
+---
+
+#### 3-2. .gitignore 필수 확인
+
+생성된 프로젝트의 `.gitignore`에 아래 항목이 반드시 포함되어 있어야 합니다.
+
+```gitignore
+# 환경 변수 파일 — 절대 커밋 금지
+.env
+.env.local
+
+# IntelliJ 로컬 설정 (환경 변수 포함 가능)
+.idea/workspace.xml
+.idea/tasks.xml
+
+# 빌드 산출물
+build/
+.gradle/
+```
+
+> ⚠️ `.env` 파일을 사용한다면, `.gitignore`에 추가 전까지 절대 `git add`하지 마세요.  
+> 한 번이라도 커밋·푸시되면 git 히스토리에 영구 기록되어 키 재발급이 필요합니다.
+
+---
+
+#### 3-3. JWT Secret Key 생성
 
 애플리케이션 실행 전 JWT 서명에 사용할 512비트 이상의 랜덤 키를 생성합니다.
 
@@ -128,28 +201,61 @@ chmod +x init.sh
 openssl rand -base64 64
 ```
 
-#### 3-2. 환경 변수 설정
+출력된 Base64 문자열 전체를 복사해 둡니다.
 
-> ⚠️ **보안 주의**: 아래 값들을 `.yml` 파일이나 소스 코드에 직접 입력하면 안 됩니다.  
-> 반드시 환경 변수 또는 시스템 환경 변수로 주입하세요.
+---
 
-**Windows (PowerShell) — 현재 세션에 임시 설정**
+#### 3-4. 환경 변수 설정 방법
+
+아래 세 가지 방법 중 하나를 선택합니다. **방법 A (IntelliJ Run Configuration)를 권장**합니다.
+
+---
+
+##### 방법 A. IntelliJ Run Configuration (로컬 개발 권장)
+
+소스 코드와 완전히 분리되어 가장 안전하고 편리합니다.
+
+1. 상단 메뉴 **Run → Edit Configurations...**
+2. 실행 설정(`StarterApplication`) 선택
+3. **Environment variables** 항목 오른쪽 편집 아이콘(`...`) 클릭
+4. `+` 버튼으로 아래 값 입력 후 **OK → Apply → OK**
+
+| Name | Value | 비고 |
+|------|-------|------|
+| `JWT_SECRET` | Step 3-3에서 생성한 Base64 값 | 필수 |
+| `DB_URL` | `jdbc:mysql://localhost:3306/mydb?serverTimezone=Asia/Seoul` | MySQL 사용 시 |
+| `DB_USERNAME` | `root` | MySQL 사용 시 |
+| `DB_PASSWORD` | DB 비밀번호 | MySQL 사용 시 |
+| `GOOGLE_CLIENT_ID` | Google Cloud 콘솔에서 발급 | 소셜 로그인 사용 시 |
+| `GOOGLE_CLIENT_SECRET` | Google Cloud 콘솔에서 발급 | 소셜 로그인 사용 시 |
+| `NAVER_CLIENT_ID` | Naver 개발자센터에서 발급 | 소셜 로그인 사용 시 |
+| `NAVER_CLIENT_SECRET` | Naver 개발자센터에서 발급 | 소셜 로그인 사용 시 |
+| `KAKAO_CLIENT_ID` | Kakao Developers에서 발급 | 소셜 로그인 사용 시 |
+| `KAKAO_CLIENT_SECRET` | Kakao Developers에서 발급 | 소셜 로그인 사용 시 |
+
+---
+
+##### 방법 B. 터미널 세션 임시 설정
+
+터미널을 닫으면 사라지는 일시적 설정입니다. `./gradlew bootRun` 전에 실행하세요.
+
+**Windows (PowerShell)**
 ```powershell
 # JWT (필수)
 $env:JWT_SECRET = "위에서_생성한_Base64_키"
 
-# DB 연결 (mysql 또는 postgresql 선택 시 필수)
+# DB 연결 (mysql / postgresql 선택 시 필수)
 $env:DB_URL      = "jdbc:mysql://localhost:3306/mydb?serverTimezone=Asia/Seoul"
 $env:DB_USERNAME = "root"
 $env:DB_PASSWORD = "yourpassword"
 
-# OAuth2 소셜 로그인 (소셜 로그인 사용 시 필수)
-$env:GOOGLE_CLIENT_ID      = "Google_콘솔_client_id"
-$env:GOOGLE_CLIENT_SECRET  = "Google_콘솔_client_secret"
-$env:NAVER_CLIENT_ID       = "Naver_개발자센터_client_id"
-$env:NAVER_CLIENT_SECRET   = "Naver_개발자센터_client_secret"
-$env:KAKAO_CLIENT_ID       = "Kakao_개발자센터_REST_API_키"
-$env:KAKAO_CLIENT_SECRET   = "Kakao_개발자센터_client_secret"
+# OAuth2 소셜 로그인 (소셜 로그인 사용 시)
+$env:GOOGLE_CLIENT_ID     = "Google_콘솔_client_id"
+$env:GOOGLE_CLIENT_SECRET = "Google_콘솔_client_secret"
+$env:NAVER_CLIENT_ID      = "Naver_개발자센터_client_id"
+$env:NAVER_CLIENT_SECRET  = "Naver_개발자센터_client_secret"
+$env:KAKAO_CLIENT_ID      = "Kakao_개발자센터_REST_API_키"
+$env:KAKAO_CLIENT_SECRET  = "Kakao_개발자센터_client_secret"
 ```
 
 **Linux / macOS**
@@ -166,7 +272,51 @@ export KAKAO_CLIENT_ID="..."
 export KAKAO_CLIENT_SECRET="..."
 ```
 
-#### 3-3. OAuth2 키 발급 위치
+---
+
+##### 방법 C. `.env` 파일 사용 (팀 개발 시 편리)
+
+**Step 1.** 프로젝트 루트에 `.env` 파일 생성 (`.gitignore`에 이미 추가되어 있어야 함)
+
+```dotenv
+# .env — 절대 Git에 커밋하지 마세요
+JWT_SECRET=위에서_생성한_Base64_키
+
+DB_URL=jdbc:mysql://localhost:3306/mydb?serverTimezone=Asia/Seoul
+DB_USERNAME=root
+DB_PASSWORD=yourpassword
+
+GOOGLE_CLIENT_ID=xxx
+GOOGLE_CLIENT_SECRET=xxx
+NAVER_CLIENT_ID=xxx
+NAVER_CLIENT_SECRET=xxx
+KAKAO_CLIENT_ID=xxx
+KAKAO_CLIENT_SECRET=xxx
+```
+
+**Step 2.** 팀원 공유용 `.env.example` 파일을 Git에 추가 (실제 값 없이 키 이름만 기재)
+
+```dotenv
+# .env.example — 팀원 가이드용 (실제 값 절대 입력 금지)
+JWT_SECRET=
+DB_URL=
+DB_USERNAME=
+DB_PASSWORD=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+NAVER_CLIENT_ID=
+NAVER_CLIENT_SECRET=
+KAKAO_CLIENT_ID=
+KAKAO_CLIENT_SECRET=
+```
+
+> ⚠️ Spring Boot는 `.env` 파일을 자동으로 읽지 않습니다.  
+> IntelliJ의 **EnvFile 플러그인** 설치 후 Run Configuration에서 `.env` 경로를 지정하거나,  
+> 터미널에서 직접 로드(`source .env` — Linux/macOS) 후 `./gradlew bootRun`을 실행하세요.
+
+---
+
+#### 3-5. OAuth2 키 발급 위치
 
 | 제공자 | 발급 URL |
 |--------|----------|
@@ -174,7 +324,9 @@ export KAKAO_CLIENT_SECRET="..."
 | Naver  | Naver 개발자센터 → 애플리케이션 등록 |
 | Kakao  | Kakao Developers → 내 애플리케이션 |
 
-#### 3-4. OAuth2 Redirect URI 등록
+---
+
+#### 3-6. OAuth2 Redirect URI 등록
 
 각 제공자 콘솔에서 아래 URI를 **승인된 리디렉션 URI**로 등록하세요.
 
@@ -445,10 +597,15 @@ src/main/resources/
 ## 자주 묻는 질문 (FAQ)
 
 **Q. `JWT_SECRET` 환경 변수를 설정하지 않으면?**  
-> 애플리케이션 구동 시 `Could not resolve placeholder 'JWT_SECRET'` 에러가 발생합니다. Step 3을 참고하여 환경 변수를 설정하세요.
+> 애플리케이션 구동 시 `Could not resolve placeholder 'JWT_SECRET'` 에러가 발생합니다.  
+> Step 3-3에서 키를 생성한 뒤, Step 3-4의 방법 A(IntelliJ Run Configuration)로 등록하거나 터미널에서 `$env:JWT_SECRET="키값"` 설정 후 실행하세요.
 
-**Q. 소셜 로그인 없이 JWT만 사용하고 싶다면?**  
-> `SecurityConfig.java`에서 `.oauth2Login(...)` 설정을 제거하고, OAuth2 환경 변수를 설정하지 않아도 됩니다.
+**Q. `.yml` 파일에 직접 값을 넣으면 안 되나요?**  
+> 절대 안 됩니다. `.yml` 파일은 Git에 커밋되므로 비밀키나 DB 비밀번호가 GitHub에 그대로 노출됩니다.  
+> 반드시 `${환경변수명}` 형태로 외부에서 주입하고, 실제 값은 IntelliJ Run Configuration 또는 `.env` 파일(`.gitignore` 필수)에만 보관하세요.
+
+**Q. OAuth2 로그인 없이 JWT만 쓰고 싶다면?**  
+> `SecurityConfig.java`에서 `.oauth2Login(...)` 블록을 제거하고, OAuth2 관련 환경 변수(`GOOGLE_*`, `NAVER_*`, `KAKAO_*`)는 설정하지 않아도 됩니다.
 
 **Q. H2 콘솔 접속 방법은?**  
 > `http://localhost:8080/h2-console` 접속 → JDBC URL: `jdbc:h2:mem:testdb` · 사용자명: `sa` · 비밀번호: 빈칸
