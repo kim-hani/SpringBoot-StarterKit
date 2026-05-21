@@ -1,0 +1,4 @@
+# 테스트 전용 설정 — init 스크립트가 변경한 프로파일을 무시하고 항상 local(H2) 사용
+spring:
+  profiles:
+    active: local

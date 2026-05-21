@@ -1,0 +1,55 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.5.0'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	// [1단계] 웹, 유효성 검사, 운영 모니터링
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+	// [1단계] JPA
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+	// [1단계] DB 드라이버 — 프로파일로 실제 사용할 DB 선택
+	runtimeOnly 'com.mysql:mysql-connector-j'
+	runtimeOnly 'org.postgresql:postgresql'
+	runtimeOnly 'com.h2database:h2'             // 로컬 개발 및 테스트용 인메모리 DB
+
+	// [3단계] Spring Security + JWT + OAuth2 Client
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+	runtimeOnly    'io.jsonwebtoken:jjwt-impl:0.12.6'
+	runtimeOnly    'io.jsonwebtoken:jjwt-jackson:0.12.6'
+	testImplementation 'org.springframework.security:spring-security-test'
+
+	// [4단계] Swagger / OpenAPI
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.17'
+
+	// 코드 간소화 유틸
+	compileOnly 'org.projectlombok:lombok'
+	annotationProcessor 'org.projectlombok:lombok'
+
+	// 테스트
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}

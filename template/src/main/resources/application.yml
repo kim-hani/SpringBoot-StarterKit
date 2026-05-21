@@ -1,0 +1,46 @@
+spring:
+  profiles:
+    # init 스크립트가 mysql 또는 postgresql 로 교체 — 로컬 개발은 local(H2) 사용
+    active: local
+
+  jpa:
+    open-in-view: false         # OSIV 비활성화 (성능 권장 설정)
+    properties:
+      hibernate:
+        format_sql: true        # 로그 SQL 포매팅
+
+  jackson:
+    default-property-inclusion: non_null  # null 필드 응답 직렬화 제외
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info   # Actuator 노출 엔드포인트
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: INFO
+    com.example.starter: DEBUG
+
+# Springdoc / Swagger 설정
+# 기본적으로 Swagger UI는 비활성화 — 로컬 환경(application-local.yml)에서만 활성화
+springdoc:
+  api-docs:
+    enabled: false              # API 문서 JSON 엔드포인트 기본 비활성화
+  swagger-ui:
+    enabled: false              # Swagger UI 기본 비활성화
+
+# JWT 설정 — 실제 값은 환경 변수로 주입 (절대 코드에 직접 입력 금지)
+# JWT_SECRET: Base64 인코딩된 512비트 이상 랜덤 문자열
+# 생성 예시 (PowerShell): [Convert]::ToBase64String((1..64 | ForEach-Object { [byte](Get-Random -Max 256) }))
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiration: 1800000      # AccessToken 만료 시간: 30분 (ms)
+  refresh-token-expiration: 1209600000  # RefreshToken 만료 시간: 14일 (ms)

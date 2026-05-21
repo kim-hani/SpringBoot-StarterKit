@@ -1,0 +1,12 @@
+# MySQL 환경 설정 — 실제 값은 환경 변수로 주입 (절대 코드에 직접 입력 금지)
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/starterdb?serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: none            # 운영에서는 Flyway/Liquibase로 스키마 관리 권장
