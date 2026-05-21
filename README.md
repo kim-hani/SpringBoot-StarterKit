@@ -57,7 +57,7 @@ java -version
 
 ```bash
 git clone https://github.com/kim-hani/SpringBoot-StarterKit.git
-cd CLAUDE-SPRINGBOOT-STARTERKIT
+cd SpringBoot-StarterKit
 ```
 
 클론 후 디렉터리 구조:
