@@ -594,6 +594,70 @@ src/main/resources/
 
 ---
 
+## Claude Code 에이전트
+
+이 StarterKit에는 Claude Code 전용 에이전트가 내장되어 있습니다.  
+도메인 명세를 입력하면 Entity · Repository · DTO · Service · Controller · ErrorCode 파일을 **한 번에 자동 생성**합니다.
+
+### 사전 요구사항
+
+- [Claude Code](https://claude.ai/code) 설치 및 로그인
+- 이 레포지토리를 클론한 상태
+
+### 실행 방법
+
+**1. 프로젝트 루트에서 Claude Code 실행**
+
+```bash
+claude
+```
+
+**2. 에이전트 호출**
+
+Claude Code 채팅창에서 `@domain-scaffolder`로 에이전트를 직접 호출합니다.
+
+```
+@domain-scaffolder Product 도메인 만들어줘
+```
+
+자연어로 설명해도 자동으로 에이전트가 실행됩니다.
+
+```
+상품(Product) 도메인 추가해줘. 상품명, 가격, 재고수량, 카테고리가 필요해
+Order 도메인 만들어줘. 주문번호, 주문일시, 총금액, 주문상태(PENDING/CONFIRMED/CANCELLED)가 필요해
+```
+
+### 에이전트가 수집하는 항목
+
+에이전트는 코드 생성 전 아래 명세를 인터랙티브하게 수집합니다.
+
+| 항목 | 예시 |
+|------|------|
+| 도메인 이름 (PascalCase) | `Post`, `Product`, `Order` |
+| 필드 목록 | `title / String / NotBlank, max=200 / 게시글 제목` |
+| 생성할 API | 목록 조회, 단건 조회, 생성, 수정, 삭제 |
+| 인증/인가 설정 | 인증 필요 여부, 대상 API |
+| 특이 비즈니스 규칙 | "본인 게시글만 수정/삭제 가능" |
+
+명세를 모두 수집한 뒤 생성 계획을 먼저 보여주고 확인 후 파일을 생성합니다.
+
+### 자동 생성 파일 목록
+
+```
+domain/{domain}/
+├── entity/{Domain}.java                  ← BaseEntity 상속, JPA 어노테이션
+├── repository/{Domain}Repository.java    ← JpaRepository + 소프트 딜리트 쿼리
+├── dto/{Domain}CreateRequest.java        ← Jakarta Validation 어노테이션 적용
+├── dto/{Domain}UpdateRequest.java
+├── dto/{Domain}Response.java             ← Entity → DTO 정적 팩토리 메서드
+├── service/{Domain}Service.java          ← @Transactional 비즈니스 로직
+└── controller/{Domain}Controller.java    ← ApiResponse 래핑, Swagger 어노테이션
+```
+
+`common/exception/ErrorCode.java`에 도메인 에러 코드 섹션도 자동으로 추가됩니다.
+
+---
+
 ## 자주 묻는 질문 (FAQ)
 
 **Q. `JWT_SECRET` 환경 변수를 설정하지 않으면?**  
