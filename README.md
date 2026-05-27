@@ -55,26 +55,30 @@ java -version
 
 ### Step 1. 레포지토리 클론
 
+클론 시 **원하는 프로젝트 이름으로 디렉터리명을 지정**하세요. 이 디렉터리가 그대로 최종 프로젝트가 됩니다.
+
 ```bash
-git clone https://github.com/kim-hani/SpringBoot-StarterKit.git
-cd SpringBoot-StarterKit
+git clone https://github.com/kim-hani/SpringBoot-StarterKit.git my-api
+cd my-api
 ```
 
 클론 후 디렉터리 구조:
 
 ```
-CLAUDE-SPRINGBOOT-STARTERKIT/
-├── template/          ← 실제 Spring Boot 템플릿 소스
-├── init.ps1           ← Windows 프로젝트 생성 스크립트
-├── init.sh            ← Linux / macOS 프로젝트 생성 스크립트
+my-api/
+├── template/          ← Spring Boot 템플릿 소스 (init 실행 후 루트로 이동·삭제됨)
+├── .claude/           ← Claude Code 에이전트/스킬 (init 실행 후에도 유지)
+├── init.ps1           ← Windows 초기화 스크립트 (init 실행 후 자동 삭제)
+├── init.sh            ← Linux / macOS 초기화 스크립트 (init 실행 후 자동 삭제)
 └── README.md
 ```
 
 ---
 
-### Step 2. 새 프로젝트 생성 (init 스크립트 실행)
+### Step 2. 프로젝트 초기화 (init 스크립트 실행)
 
-스크립트가 템플릿을 복사하고 패키지명·프로젝트명·DB 설정을 자동으로 치환합니다.
+스크립트가 **현재 디렉터리**에 `template/` 내용을 풀고 패키지명·프로젝트명·DB 설정을 자동으로 치환합니다.  
+실행이 완료되면 `template/`, `init.sh`, `init.ps1`은 자동 삭제되고 `.git`이 새 프로젝트로 재초기화됩니다.
 
 #### Windows (PowerShell)
 
@@ -93,7 +97,7 @@ chmod +x init.sh
 
 | 항목 | 입력 예시 | 설명 |
 |------|----------|------|
-| 프로젝트 이름 | `my-api` | 생성될 폴더명 및 Gradle 프로젝트명 |
+| 프로젝트 이름 | `my-api` | Gradle 프로젝트명 (디렉터리 이름은 클론 시 지정) |
 | 기본 패키지명 | `com.company.myapi` | Java 패키지 경로 (소문자, 점으로 구분) |
 | DB 선택 | `mysql` 또는 `postgresql` | application.yml 프로파일 자동 변경 |
 
@@ -101,14 +105,15 @@ chmod +x init.sh
 
 | 단계 | 설명 |
 |------|------|
-| [1/5] 템플릿 복사 | `template/` 디렉터리를 `../my-api/` 로 복사 |
+| [1/5] 템플릿 복사 | `template/` 내용을 현재 디렉터리로 복사 후 `template/` 삭제 |
 | [2/5] 패키지명 치환 | 모든 `.java` · `.yml` · `.gradle` 파일의 `com.example.starter` → 입력한 패키지명 |
 | [3/5] 디렉터리 재구성 | `src/main/java/com/example/starter` → `src/main/java/com/company/myapi` |
 | [4/5] settings.gradle | 프로젝트명 업데이트 |
 | [5/5] application.yml | `active: local` → `active: mysql` 또는 `active: postgresql` |
+| [마무리] Git 재초기화 | `.git` 재초기화 후 초기 커밋 생성, `init.sh` / `init.ps1` 자동 삭제 |
 
-> 생성된 프로젝트는 **스타터킷 폴더의 상위 디렉터리**에 만들어집니다.  
-> 예) `CLAUDE-SPRINGBOOT-STARTERKIT/`와 같은 레벨에 `my-api/` 생성
+> 초기화 완료 후 현재 디렉터리(`my-api/`)가 바로 새 프로젝트입니다.  
+> `.claude/` 디렉터리(에이전트·스킬)는 그대로 유지됩니다.
 
 ---
 
@@ -340,11 +345,7 @@ http://localhost:8080/login/oauth2/code/kakao
 
 ### Step 4. 애플리케이션 실행
 
-생성된 프로젝트 디렉터리로 이동합니다.
-
-```bash
-cd ../my-api
-```
+init 스크립트 실행 후 현재 디렉터리가 바로 프로젝트입니다. 별도 이동 없이 바로 실행하세요.
 
 #### 4-1. H2 인메모리 DB로 즉시 실행 (로컬 개발 권장)
 
@@ -602,7 +603,7 @@ src/main/resources/
 ### 사전 요구사항
 
 - [Claude Code](https://claude.ai/code) 설치 및 로그인
-- 이 레포지토리를 클론한 상태
+- init 스크립트로 프로젝트를 초기화한 상태 (`.claude/` 디렉터리 포함)
 
 ### 실행 방법
 

@@ -32,10 +32,10 @@ if ($dbChoice -ne "mysql" -and $dbChoice -ne "postgresql") {
 
 $scriptDir   = Split-Path -Parent $MyInvocation.MyCommand.Path
 $templateDir = Join-Path $scriptDir "template"
-$targetDir   = Join-Path (Split-Path -Parent $scriptDir) $projectName
+$targetDir   = $scriptDir
 
-if (Test-Path $targetDir) {
-    Write-Host "오류: '$targetDir' 디렉터리가 이미 존재합니다." -ForegroundColor Red
+if (Test-Path (Join-Path $targetDir "build.gradle")) {
+    Write-Host "오류: 이미 초기화된 프로젝트입니다. (build.gradle 이 이미 존재합니다)" -ForegroundColor Red
     exit 1
 }
 
@@ -47,7 +47,8 @@ Write-Host ""
 Write-Host "▶ 프로젝트 생성 중..." -ForegroundColor Yellow
 
 # ── 1. 템플릿 복사 ────────────────────────────────────────────────────────────
-Copy-Item -Path $templateDir -Destination $targetDir -Recurse -Force
+Copy-Item -Path "$templateDir\*" -Destination $targetDir -Recurse -Force
+Remove-Item -Path $templateDir -Recurse -Force
 Write-Host "  [1/5] 템플릿 복사 완료" -ForegroundColor Green
 
 # ── 2. 파일 내용 패키지명 치환 ─────────────────────────────────────────────────
@@ -108,7 +109,7 @@ $content = $content.Replace("active: local", "active: $dbChoice")
 Write-Host "  [5/5] application.yml DB 프로파일 설정 완료 ($dbChoice)" -ForegroundColor Green
 
 # ── 6. Gradle Wrapper 생성 (Gradle 설치 시) ────────────────────────────────────
-Push-Location $targetDir
+Push-Location $scriptDir
 try {
     if (Get-Command gradle -ErrorAction SilentlyContinue) {
         Write-Host ""
@@ -119,8 +120,28 @@ try {
         Write-Host ""
         Write-Host "⚠  Gradle이 설치되어 있지 않습니다." -ForegroundColor Yellow
         Write-Host "   IntelliJ IDEA로 프로젝트를 열면 Gradle을 자동으로 설정합니다." -ForegroundColor Yellow
-        Write-Host "   또는 Gradle 설치 후 '$targetDir' 에서 'gradle wrapper --gradle-version 8.10.2' 실행" -ForegroundColor Yellow
+        Write-Host "   또는 Gradle 설치 후 이 디렉터리에서 'gradle wrapper --gradle-version 8.10.2' 실행" -ForegroundColor Yellow
     }
+} finally {
+    Pop-Location
+}
+
+# ── 7. 초기화 파일 정리 및 Git 재초기화 ──────────────────────────────────────
+Write-Host ""
+Write-Host "▶ Git 저장소 초기화 중..." -ForegroundColor Yellow
+
+$initSh  = Join-Path $scriptDir "init.sh"
+$initPs1 = Join-Path $scriptDir "init.ps1"
+if (Test-Path $initSh)  { Remove-Item $initSh  -Force }
+if (Test-Path $initPs1) { Remove-Item $initPs1 -Force }
+
+Push-Location $scriptDir
+try {
+    if (Test-Path ".git") { Remove-Item ".git" -Recurse -Force }
+    git init -q
+    git add .
+    git commit -q -m "chore: initialize project from Spring Boot Starter Kit"
+    Write-Host "  Git 초기화 완료" -ForegroundColor Green
 } finally {
     Pop-Location
 }
@@ -129,13 +150,12 @@ try {
 Write-Host ""
 Write-Host "======================================" -ForegroundColor Green
 Write-Host "  ✅ 프로젝트 생성 완료!"              -ForegroundColor Green
-Write-Host "     $targetDir"                       -ForegroundColor Green
+Write-Host "     $scriptDir"                       -ForegroundColor Green
 Write-Host "======================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "다음 단계:" -ForegroundColor Cyan
-Write-Host "  1. cd $targetDir"
-Write-Host "  2. .\gradlew bootRun            # H2 인메모리로 바로 실행 가능"
-Write-Host "  3. http://localhost:8080/actuator/health 로 기동 확인"
+Write-Host "  1. .\gradlew bootRun            # H2 인메모리로 바로 실행 가능"
+Write-Host "  2. http://localhost:8080/actuator/health 로 기동 확인"
 Write-Host ""
 Write-Host "MySQL/PostgreSQL 사용 시 환경 변수 설정:" -ForegroundColor Cyan
 Write-Host "  `$env:DB_URL      = 'jdbc:mysql://localhost:3306/mydb'"

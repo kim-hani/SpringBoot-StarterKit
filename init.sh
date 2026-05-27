@@ -28,10 +28,10 @@ fi
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 TEMPLATE_DIR="$SCRIPT_DIR/template"
-TARGET_DIR="$(dirname "$SCRIPT_DIR")/$PROJECT_NAME"
+TARGET_DIR="$SCRIPT_DIR"
 
-if [[ -d "$TARGET_DIR" ]]; then
-    echo "오류: '$TARGET_DIR' 디렉터리가 이미 존재합니다." >&2; exit 1
+if [[ -f "$TARGET_DIR/build.gradle" ]]; then
+    echo "오류: 이미 초기화된 프로젝트입니다. (build.gradle 이 이미 존재합니다)" >&2; exit 1
 fi
 
 OLD_PACKAGE="com.example.starter"
@@ -42,7 +42,8 @@ echo ""
 echo "▶ 프로젝트 생성 중..."
 
 # ── 1. 템플릿 복사 ────────────────────────────────────────────────────────────
-cp -r "$TEMPLATE_DIR" "$TARGET_DIR"
+cp -r "$TEMPLATE_DIR/." "$TARGET_DIR/"
+rm -rf "$TEMPLATE_DIR"
 echo "  [1/5] 템플릿 복사 완료"
 
 # ── 2. 파일 내용 패키지명 치환 ─────────────────────────────────────────────────
@@ -87,27 +88,34 @@ echo "  [5/5] application.yml DB 프로파일 설정 완료 ($DB_CHOICE)"
 if command -v gradle &>/dev/null; then
     echo ""
     echo "▶ Gradle Wrapper 생성 중..."
-    (cd "$TARGET_DIR" && gradle wrapper --gradle-version 8.10.2 --quiet)
-    chmod +x "$TARGET_DIR/gradlew"
+    (cd "$SCRIPT_DIR" && gradle wrapper --gradle-version 8.10.2 --quiet)
+    chmod +x "$SCRIPT_DIR/gradlew"
     echo "  Gradle Wrapper 생성 완료"
 else
     echo ""
     echo "⚠  Gradle이 설치되어 있지 않습니다."
     echo "   IntelliJ IDEA로 프로젝트를 열면 Gradle을 자동으로 설정합니다."
-    echo "   또는 Gradle 설치 후 '$TARGET_DIR' 에서 'gradle wrapper --gradle-version 8.10.2' 실행"
+    echo "   또는 Gradle 설치 후 이 디렉터리에서 'gradle wrapper --gradle-version 8.10.2' 실행"
 fi
+
+# ── 7. 초기화 파일 정리 및 Git 재초기화 ──────────────────────────────────────
+echo ""
+echo "▶ Git 저장소 초기화 중..."
+rm -f "$SCRIPT_DIR/init.sh" "$SCRIPT_DIR/init.ps1"
+(cd "$SCRIPT_DIR" && rm -rf .git && git init -q && git add . \
+    && git commit -q -m "chore: initialize project from Spring Boot Starter Kit")
+echo "  Git 초기화 완료"
 
 # ── 완료 메시지 ─────────────────────────────────────────────────────────────
 echo ""
 echo "======================================"
 echo "  ✅ 프로젝트 생성 완료!"
-echo "     $TARGET_DIR"
+echo "     $SCRIPT_DIR"
 echo "======================================"
 echo ""
 echo "다음 단계:"
-echo "  1. cd $TARGET_DIR"
-echo "  2. ./gradlew bootRun            # H2 인메모리로 바로 실행 가능"
-echo "  3. http://localhost:8080/actuator/health 로 기동 확인"
+echo "  1. ./gradlew bootRun            # H2 인메모리로 바로 실행 가능"
+echo "  2. http://localhost:8080/actuator/health 로 기동 확인"
 echo ""
 echo "MySQL/PostgreSQL 사용 시 환경 변수 설정:"
 echo "  export DB_URL='jdbc:mysql://localhost:3306/mydb'"
