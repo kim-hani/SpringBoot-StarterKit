@@ -58,14 +58,14 @@ java -version
 클론 시 **원하는 프로젝트 이름으로 디렉터리명을 지정**하세요. 이 디렉터리가 그대로 최종 프로젝트가 됩니다.
 
 ```bash
-git clone https://github.com/kim-hani/SpringBoot-StarterKit.git my-api
-cd my-api
+git clone https://github.com/kim-hani/SpringBoot-StarterKit.git <dir name>
+cd <dir name>
 ```
 
 클론 후 디렉터리 구조:
 
 ```
-my-api/
+<dir name>/
 ├── template/          ← Spring Boot 템플릿 소스 (init 실행 후 루트로 이동·삭제됨)
 ├── .claude/           ← Claude Code 에이전트/스킬 (init 실행 후에도 유지)
 ├── init.ps1           ← Windows 초기화 스크립트 (init 실행 후 자동 삭제)
