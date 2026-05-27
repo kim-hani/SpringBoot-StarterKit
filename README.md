@@ -615,11 +615,8 @@ claude
 
 **2. 에이전트 호출**
 
-Claude Code 채팅창에서 `@domain-scaffolder`로 에이전트를 직접 호출합니다.
+Claude Code 채팅창에서 `/agent` 명령어를 입력하고 domain-scaffolder를 선택합니다.
 
-```
-@domain-scaffolder Product 도메인 만들어줘
-```
 
 자연어로 설명해도 자동으로 에이전트가 실행됩니다.
 
